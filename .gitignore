@@ -1,0 +1,64 @@
+## Visual Studio и UWP специфика
+[Bb]in/
+[Oo]bj/
+.vs/
+*.user
+*.suo
+*.aps
+*.pch
+*.vspscc
+*.vssscc
+*.tmp
+*.log
+*.tlog
+*.sdf
+*.opensdf
+*.db
+*.opendb
+
+## Сборки UWP
+*.appx
+*.appxbundle
+*.appxupload
+*.publish
+*.cer
+*.pfx
+*.p12
+
+## NuGet
+[Nn]u[Gg]et/
+*.nupkg
+packages/
+
+## Тесты
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+## Файлы IDE
+_ReSharper*/
+*.sln.iml
+*.DotSettings
+
+## Временные файлы
+[Tt]humbs.db
+[Dd]esktop.ini
+
+## Системные файлы
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+arm/
+arm64/
+*.cache
+*.ilk
+*.meta
+*.obj
+*.pdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.vshost.*
+*.iobj
+*.ipdb

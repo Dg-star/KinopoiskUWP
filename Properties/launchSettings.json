@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "KinopoiskUWP": {
+      "commandName": "MsixPackage"
+    }
+  }
+}
