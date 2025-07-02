@@ -1,10 +1,10 @@
-﻿using KinopoiskUWP.Models;
-using KinopoiskUWP.ViewModels;
+﻿using KinopoiskUWP.ViewModels;
 using Microsoft.Toolkit.Mvvm.DependencyInjection;
+using System;
 using System.Diagnostics;
+using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Navigation;
 
 namespace KinopoiskUWP.Views
 {
@@ -27,6 +27,13 @@ namespace KinopoiskUWP.Views
                 {
                     await ViewModel.LoadFilmsAsync();
                     Debug.WriteLine($"Films loaded: {ViewModel.Films.Count}");
+
+                    // Обновление интерфейса через Dispatcher
+                    await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                    {
+                        // Правильный способ обновления - через метод в ViewModel
+                        ViewModel.NotifyFilmsUpdated();
+                    });
                 }
                 catch (System.Exception ex)
                 {
@@ -34,22 +41,6 @@ namespace KinopoiskUWP.Views
                     ViewModel.ErrorMessage = "Ошибка при загрузке страницы";
                 }
             };
-        }
-
-        protected override void OnNavigatedTo(NavigationEventArgs e)
-        {
-            base.OnNavigatedTo(e);
-            Debug.WriteLine($"MainPage navigated to with parameter: {e?.Parameter}");
-            ViewModel.OnNavigatedTo(e?.Parameter);
-        }
-
-        private async void FilmItem_Click(object sender, ItemClickEventArgs e)
-        {
-            if (e.ClickedItem is Film film)
-            {
-                Debug.WriteLine($"Film clicked: {film.NameRu}");
-                await ViewModel.NavigateToFilmDetailsAsync(film);
-            }
         }
     }
 }

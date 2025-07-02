@@ -127,9 +127,7 @@ namespace KinopoiskUWP.ViewModels
                 Debug.WriteLine("Loading films...");
                 await UpdateUI(() =>
                 {
-                    IsLoading = true;
-                    ErrorMessage = null;
-                    Films.Clear();
+                    OnPropertyChanged(nameof(Films));
                 });
 
                 var films = await GetFilmsWithCacheAsync();
@@ -161,7 +159,10 @@ namespace KinopoiskUWP.ViewModels
                 Debug.WriteLine("Films loading completed");
             }
         }
-
+        public void NotifyFilmsUpdated()
+        {
+            OnPropertyChanged(nameof(Films));
+        }
         private async Task<List<Film>> GetFilmsWithCacheAsync()
         {
             try
