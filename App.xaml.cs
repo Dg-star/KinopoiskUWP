@@ -1,6 +1,10 @@
-﻿using System;
+﻿using KinopoiskUWP.Services;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Net.Http;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
+using Windows.Devices.Spi;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
@@ -16,11 +20,25 @@ namespace KinopoiskUWP
         /// Initializes the singleton application object. This is the first line of authored code
         /// executed, and as such is the logical equivalent of main() or WinMain().
         /// </summary>
+        /// 
+
+        public static IServiceProvider Services { get; private set; }
         public App()
         {
-            InitializeComponent();
-
+            this.InitializeComponent();
             Suspending += OnSuspending;
+            Services = ConfigureServices();
+            
+        }
+
+        private static IServiceProvider ConfigureServices()
+        {
+            var services = new ServiceCollection();
+
+            services.AddSingleton<HttpClient>();
+            services.AddSingleton<IKinopoiskService, KinopoiskService>();
+
+            return services.BuildServiceProvider();
         }
 
         /// <inheritdoc/>
