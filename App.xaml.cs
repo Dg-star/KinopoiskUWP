@@ -38,6 +38,8 @@ namespace KinopoiskUWP
             services.AddSingleton<HttpClient>();
             services.AddSingleton<IKinopoiskService, KinopoiskService>();
             services.AddSingleton<FiltersCacheService>();
+            services.AddSingleton<FilmsCacheService>();
+            services.AddSingleton<FavoritesService>();
 
             return services.BuildServiceProvider();
         }
