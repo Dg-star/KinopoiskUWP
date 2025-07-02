@@ -37,6 +37,7 @@ namespace KinopoiskUWP
 
             services.AddSingleton<HttpClient>();
             services.AddSingleton<IKinopoiskService, KinopoiskService>();
+            services.AddSingleton<FiltersCacheService>();
 
             return services.BuildServiceProvider();
         }
