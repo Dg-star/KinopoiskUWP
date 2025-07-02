@@ -9,7 +9,7 @@ using Windows.Storage;
 
 namespace KinopoiskUWP.Services
 {
-    public class FilmsCacheService
+    public class FilmsCacheService : IFilmsCacheService
     {
         private const string CacheFileName = "films_cache.json";
         private readonly StorageFolder _localFolder = ApplicationData.Current.LocalFolder;
@@ -19,30 +19,26 @@ namespace KinopoiskUWP.Services
             try
             {
                 var file = await _localFolder.TryGetItemAsync(CacheFileName) as StorageFile;
-                if (file != null)
-                {
-                    var json = await FileIO.ReadTextAsync(file);
-                    if (!string.IsNullOrWhiteSpace(json))
-                    {
-                        return JsonSerializer.Deserialize<List<Film>>(json);
-                    }
-                }
+                if (file == null) return null;
+
+                var json = await FileIO.ReadTextAsync(file);
+                return string.IsNullOrWhiteSpace(json)
+                    ? null
+                    : JsonSerializer.Deserialize<List<Film>>(json);
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error loading films cache: {ex.Message}");
+                return null;
             }
-            return null;
         }
 
         public async Task SaveAsync(List<Film> films)
         {
+            if (films == null) throw new ArgumentNullException(nameof(films));
+
             try
             {
-                var file = await _localFolder.CreateFileAsync(
-                    CacheFileName,
-                    CreationCollisionOption.ReplaceExisting);
-
                 var options = new JsonSerializerOptions
                 {
                     WriteIndented = true,
@@ -51,12 +47,16 @@ namespace KinopoiskUWP.Services
                 };
 
                 var json = JsonSerializer.Serialize(films, options);
+                var file = await _localFolder.CreateFileAsync(
+                    CacheFileName,
+                    CreationCollisionOption.ReplaceExisting);
+
                 await FileIO.WriteTextAsync(file, json);
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error saving films cache: {ex.Message}");
-                throw;
+                throw new InvalidOperationException("Failed to save films cache", ex);
             }
         }
 
@@ -73,6 +73,7 @@ namespace KinopoiskUWP.Services
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error clearing films cache: {ex.Message}");
+                throw new InvalidOperationException("Failed to clear films cache", ex);
             }
         }
     }

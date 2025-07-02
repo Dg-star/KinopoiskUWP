@@ -7,18 +7,20 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.Core;
 using Windows.Storage;
+using Windows.UI.Core;
 
 namespace KinopoiskUWP.Services
 {
-    public class FavoritesService : ObservableObject
+    public class FavoritesService : ObservableObject, IFavoritesService
     {
         private const string FavoritesFileName = "favorites.json";
         private readonly StorageFolder _localFolder = ApplicationData.Current.LocalFolder;
         private List<Film> _favorites = new List<Film>();
 
         public ObservableCollection<Film> FavoriteFilms { get; } = new ObservableCollection<Film>();
-
+        
         public FavoritesService()
         {
             _ = InitializeAsync();
@@ -29,31 +31,23 @@ namespace KinopoiskUWP.Services
             await LoadFavoritesAsync();
         }
 
-        private async Task LoadFavoritesAsync()
+        public async Task LoadFavoritesAsync()
         {
             try
             {
                 var file = await _localFolder.TryGetItemAsync(FavoritesFileName) as StorageFile;
-                if (file != null)
-                {
-                    var json = await FileIO.ReadTextAsync(file);
-                    _favorites = JsonSerializer.Deserialize<List<Film>>(json) ?? new List<Film>();
-                }
-                else
-                {
-                    _favorites = new List<Film>();
-                }
+                _favorites = file != null
+                    ? JsonSerializer.Deserialize<List<Film>>(await FileIO.ReadTextAsync(file)) ?? new List<Film>()
+                    : new List<Film>();
 
-                await Windows.ApplicationModel.Core.CoreApplication.MainView.Dispatcher.RunAsync(
-                    Windows.UI.Core.CoreDispatcherPriority.Normal,
-                    () =>
+                await UpdateUI(() =>
+                {
+                    FavoriteFilms.Clear();
+                    foreach (var film in _favorites)
                     {
-                        FavoriteFilms.Clear();
-                        foreach (var film in _favorites)
-                        {
-                            FavoriteFilms.Add(film);
-                        }
-                    });
+                        FavoriteFilms.Add(film);
+                    }
+                });
             }
             catch (Exception ex)
             {
@@ -62,7 +56,7 @@ namespace KinopoiskUWP.Services
             }
         }
 
-        private async Task SaveFavoritesAsync()
+        public async Task SaveFavoritesAsync()
         {
             try
             {
@@ -76,8 +70,7 @@ namespace KinopoiskUWP.Services
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                 };
 
-                var json = JsonSerializer.Serialize(_favorites, options);
-                await FileIO.WriteTextAsync(file, json);
+                await FileIO.WriteTextAsync(file, JsonSerializer.Serialize(_favorites, options));
             }
             catch (Exception ex)
             {
@@ -90,54 +83,57 @@ namespace KinopoiskUWP.Services
 
         public async Task AddToFavoritesAsync(Film film)
         {
-            if (film == null || film.FilmId <= 0) return;
+            if (film?.FilmId <= 0) return;
 
-            await Windows.ApplicationModel.Core.CoreApplication.MainView.Dispatcher.RunAsync(
-                Windows.UI.Core.CoreDispatcherPriority.Normal,
-                async () =>
+            await ExecuteOnUIThread(async () =>
+            {
+                if (_favorites.All(f => f.FilmId != film.FilmId))
                 {
-                    if (!_favorites.Exists(f => f.FilmId == film.FilmId))
-                    {
-                        _favorites.Add(film);
-                        FavoriteFilms.Add(film);
-                        await SaveFavoritesAsync();
-                    }
-                });
+                    _favorites.Add(film);
+                    FavoriteFilms.Add(film);
+                    await SaveFavoritesAsync();
+                }
+            });
         }
 
         public async Task RemoveFromFavoritesAsync(Film film)
         {
             if (film == null) return;
 
-            await Windows.ApplicationModel.Core.CoreApplication.MainView.Dispatcher.RunAsync(
-                Windows.UI.Core.CoreDispatcherPriority.Normal,
-                async () =>
+            await ExecuteOnUIThread(async () =>
+            {
+                _favorites.RemoveAll(f => f.FilmId == film.FilmId);
+                var filmToRemove = FavoriteFilms.FirstOrDefault(f => f.FilmId == film.FilmId);
+                if (filmToRemove != null)
                 {
-                    _favorites.RemoveAll(f => f.FilmId == film.FilmId);
-                    var filmInCollection = FavoriteFilms.FirstOrDefault(f => f.FilmId == film.FilmId);
-                    if (filmInCollection != null)
-                    {
-                        FavoriteFilms.Remove(filmInCollection);
-                    }
-                    await SaveFavoritesAsync();
-                });
+                    FavoriteFilms.Remove(filmToRemove);
+                }
+                await SaveFavoritesAsync();
+            });
         }
 
-        public bool IsFavorite(Film film)
-        {
-            return film != null && _favorites.Exists(f => f.FilmId == film.FilmId);
-        }
+        public bool IsFavorite(Film film) => film != null && _favorites.Any(f => f.FilmId == film.FilmId);
 
         public async Task ClearFavoritesAsync()
         {
-            await Windows.ApplicationModel.Core.CoreApplication.MainView.Dispatcher.RunAsync(
-                Windows.UI.Core.CoreDispatcherPriority.Normal,
-                async () =>
-                {
-                    _favorites.Clear();
-                    FavoriteFilms.Clear();
-                    await SaveFavoritesAsync();
-                });
+            await ExecuteOnUIThread(async () =>
+            {
+                _favorites.Clear();
+                FavoriteFilms.Clear();
+                await SaveFavoritesAsync();
+            });
+        }
+
+        private async Task ExecuteOnUIThread(Action action)
+        {
+            await CoreApplication.MainView.Dispatcher.RunAsync(
+                CoreDispatcherPriority.Normal,
+                () => action?.Invoke());
+        }
+
+        private async Task UpdateUI(Action action)
+        {
+            await ExecuteOnUIThread(action);
         }
     }
 }
