@@ -21,9 +21,15 @@ namespace KinopoiskUWP.Services
                 if (file == null) return null;
 
                 var json = await FileIO.ReadTextAsync(file);
-                return string.IsNullOrWhiteSpace(json)
-                    ? null
-                    : JsonSerializer.Deserialize<FiltersCache>(json);
+                if (string.IsNullOrWhiteSpace(json))
+                    return null;
+
+                var options = new JsonSerializerOptions
+                {
+                    TypeInfoResolver = SourceGenerationContext.Default
+                };
+
+                return JsonSerializer.Deserialize<FiltersCache>(json, options);
             }
             catch (Exception ex)
             {
@@ -35,14 +41,13 @@ namespace KinopoiskUWP.Services
         public async Task SaveAsync(FiltersCache filters)
         {
             if (filters == null)
-            {
                 throw new ArgumentNullException(nameof(filters));
-            }
 
             try
             {
                 var options = new JsonSerializerOptions
                 {
+                    TypeInfoResolver = SourceGenerationContext.Default,
                     WriteIndented = true,
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull

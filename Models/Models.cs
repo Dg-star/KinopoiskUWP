@@ -1,6 +1,7 @@
 ﻿using Microsoft.Toolkit.Mvvm.ComponentModel;
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace KinopoiskUWP.Models
@@ -13,18 +14,6 @@ namespace KinopoiskUWP.Models
         [JsonPropertyName("nameRu")]
         public string NameRu { get; init; }
 
-        [JsonPropertyName("year")]
-        public string Year { get; init; }
-
-        [JsonPropertyName("kinopoiskId")]
-        public int? KinopoiskId { get; init; }
-
-        [JsonPropertyName("kinopoiskHDId")]
-        public string KinopoiskHDId { get; init; }
-
-        [JsonPropertyName("imdbId")]
-        public string ImdbId { get; init; }
-
         [JsonPropertyName("nameEn")]
         public string NameEn { get; init; }
 
@@ -34,20 +23,30 @@ namespace KinopoiskUWP.Models
         [JsonPropertyName("posterUrl")]
         public string PosterUrl { get; init; }
 
+        [JsonPropertyName("posterUrlPreview")]
+        public string PosterUrlPreview { get; init; }
+
         [JsonPropertyName("coverUrl")]
         public string CoverUrl { get; init; }
 
         [JsonPropertyName("logoUrl")]
         public string LogoUrl { get; init; }
 
-        [JsonPropertyName("reviewsCount")]
-        public int? ReviewsCount { get; init; }
+        [JsonPropertyName("year")]
+        public string Year { get; init; }
 
-        [JsonPropertyName("ratingGoodReview")]
-        public double? RatingGoodReview { get; init; }
+        [JsonPropertyName("filmLength")]
+        [JsonConverter(typeof(FilmLengthConverter))]
+        public string FilmLength { get; init; }
 
-        [JsonPropertyName("ratingGoodReviewVoteCount")]
-        public int? RatingGoodReviewVoteCount { get; init; }
+        [JsonPropertyName("slogan")]
+        public string Slogan { get; init; }
+
+        [JsonPropertyName("description")]
+        public string Description { get; init; }
+
+        [JsonPropertyName("shortDescription")]
+        public string ShortDescription { get; init; }
 
         [JsonPropertyName("ratingKinopoisk")]
         public double? RatingKinopoisk { get; init; }
@@ -82,17 +81,23 @@ namespace KinopoiskUWP.Models
         [JsonPropertyName("webUrl")]
         public string WebUrl { get; init; }
 
-        [JsonPropertyName("filmLength")]
-        public int? FilmLength { get; init; }
+        [JsonPropertyName("kinopoiskId")]
+        public int? KinopoiskId { get; init; }
 
-        [JsonPropertyName("slogan")]
-        public string Slogan { get; init; }
+        [JsonPropertyName("kinopoiskHDId")]
+        public string KinopoiskHDId { get; init; }
 
-        [JsonPropertyName("description")]
-        public string Description { get; init; }
+        [JsonPropertyName("imdbId")]
+        public string ImdbId { get; init; }
 
-        [JsonPropertyName("shortDescription")]
-        public string ShortDescription { get; init; }
+        [JsonPropertyName("reviewsCount")]
+        public int? ReviewsCount { get; init; }
+
+        [JsonPropertyName("ratingGoodReview")]
+        public double? RatingGoodReview { get; init; }
+
+        [JsonPropertyName("ratingGoodReviewVoteCount")]
+        public int? RatingGoodReviewVoteCount { get; init; }
 
         [JsonPropertyName("editorAnnotation")]
         public string EditorAnnotation { get; init; }
@@ -136,20 +141,34 @@ namespace KinopoiskUWP.Models
         [JsonPropertyName("completed")]
         public bool? Completed { get; init; }
 
-        [JsonPropertyName("posterUrlPreview")]
-        public string PosterUrlPreview { get; init; }
+        [JsonPropertyName("countries")]
+        public List<Country> Countries { get; init; } = new List<Country>();
 
         [JsonPropertyName("genres")]
         public List<Genre> Genres { get; init; } = new List<Genre>();
-
-        [JsonPropertyName("countries")]
-        public List<Country> Countries { get; init; } = new List<Country>();
 
         private bool _isFavorite;
         public bool IsFavorite
         {
             get => _isFavorite;
             set => SetProperty(ref _isFavorite, value);
+        }
+    }
+
+    public class FilmLengthConverter : JsonConverter<string>
+    {
+        public override string Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType == JsonTokenType.Number)
+            {
+                return reader.GetInt32().ToString();
+            }
+            return reader.GetString() ?? string.Empty;
+        }
+
+        public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)
+        {
+            writer.WriteStringValue(value);
         }
     }
 

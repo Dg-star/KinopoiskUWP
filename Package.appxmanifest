@@ -15,7 +15,7 @@
 
   <Properties>
     <DisplayName>KinopoiskUWP</DisplayName>
-    <PublisherDisplayName>zxczx</PublisherDisplayName>
+    <PublisherDisplayName>Лях Никита Андреевич</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
@@ -45,5 +45,8 @@
 
   <Capabilities>
     <Capability Name="internetClient" />
+    <Capability Name="internetClientServer"/>
   </Capabilities>
+  
+
 </Package>

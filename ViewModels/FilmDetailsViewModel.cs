@@ -45,7 +45,6 @@ namespace KinopoiskUWP.ViewModels
         public string Slogan => Film.Slogan ?? string.Empty;
         public string Description => Film.Description ?? string.Empty;
         public string ImdbId => Film.ImdbId ?? string.Empty;
-        public string FilmLength => Film.FilmLength > 0 ? $"{Film.FilmLength} мин" : string.Empty;
         public string WebUrl => Film.WebUrl ?? string.Empty;
         public bool IsFavorite => Film.IsFavorite;
 

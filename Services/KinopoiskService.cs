@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 using System.Threading.Tasks;
 
 namespace KinopoiskUWP.Services
@@ -16,20 +15,17 @@ namespace KinopoiskUWP.Services
         private const string ApiKey = "e7534db3-388a-487b-bc0a-14ed9e1d4be5";
         private const string BaseUrl = "https://kinopoiskapiunofficial.tech/api/v2.2/films";
 
-        // Добавляем JsonSerializerOptions с источником метаданных
-        private readonly JsonSerializerOptions _jsonOptions = new()
-        {
-            PropertyNameCaseInsensitive = true,
-            Converters = { new JsonStringEnumConverter() },
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            TypeInfoResolver = new DefaultJsonTypeInfoResolver()
-        };
-
         public KinopoiskService()
         {
-            _httpClient = new HttpClient();
+            _httpClient = new HttpClient(new HttpClientHandler()
+            {
+                AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate
+            });
+
             _httpClient.DefaultRequestHeaders.Add("X-API-KEY", ApiKey);
             _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+            _httpClient.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate");
+            _httpClient.Timeout = TimeSpan.FromSeconds(30);
         }
 
         public async Task<List<Film>> GetTopFilmsAsync()
@@ -55,12 +51,12 @@ namespace KinopoiskUWP.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync(new Uri(url));
+                Debug.WriteLine($"API Request: {url}");
+
+                var response = await _httpClient.GetAsync(url);
                 response.EnsureSuccessStatusCode();
 
                 var jsonString = await response.Content.ReadAsStringAsync();
-
-                Debug.WriteLine($"API Request: {url}");
                 Debug.WriteLine($"API Response: {jsonString}");
 
                 if (IsHtmlResponse(jsonString))
@@ -68,7 +64,7 @@ namespace KinopoiskUWP.Services
                     throw new KinopoiskApiException("Сервер вернул HTML вместо JSON. Возможно проблема с API ключом.");
                 }
 
-                return JsonSerializer.Deserialize<T>(jsonString, _jsonOptions);
+                return JsonSerializer.Deserialize<T>(jsonString, SourceGenerationContext.Default.Options);
             }
             catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
             {
